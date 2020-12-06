@@ -1,0 +1,18 @@
+    h1 {
+        text-align: center;
+    }
+    h4 {
+        margin: auto;
+        width: 22em;
+    }
+    li {
+        color: #1E2749;
+        margin: auto;
+        width: 22em;
+    }
+    a:link {
+        color: #5B80CB;
+    }
+    a:visited {
+        color: #1E2749;
+    }

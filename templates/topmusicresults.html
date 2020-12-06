@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Top {{resultsnum}} {{tracksorartists}} for {{country}}</title>
+    <link rel='stylesheet' href="{{ url_for('static', filename='topmusicstyle.css') }}"/>
+<!--    <style>-->
+<!--        * {-->
+<!--            background-color: #FCDFCE;-->
+<!--            font-family: Montserrat, sans-serif;-->
+<!--        }-->
+<!--        h1 {-->
+<!--            text-align: center;-->
+<!--        }-->
+<!--        h4 {-->
+<!--            margin: auto;-->
+<!--            width: 22em;-->
+<!--        }-->
+<!--        li {-->
+<!--            color: #1E2749;-->
+<!--            margin: auto;-->
+<!--            width: 22em;-->
+<!--        }-->
+<!--        a:link {-->
+<!--            color: #5B80CB;-->
+<!--        }-->
+<!--        a:visited {-->
+<!--            color: #1E2749;-->
+<!--        }-->
+<!--    </style>-->
+
+</head>
+<body>
+<h1>Top {{results['resultsnum']}} {{results['tracksorartists']}} for your countries:</h1>
+
+{% if results['artists'] == True %}
+    {% for country in results['country'] %}
+        <h4>Artists - {{ country }}: </h4>
+        <ol>
+            {% for artist in results['artistsinfo'][country] %}
+                <li class="results"><a href="{{artist.url}}">{{artist.name}}</a></li>
+            {% endfor %}
+        </ol>
+    {% endfor %}
+{% endif %}
+
+{% if results['tracks'] == True %}
+    {% for country in results['country'] %}
+        <h4>Tracks - {{ country }}:</h4>
+        <ol>
+            {% for track in results['tracksinfo'][country] %}
+                <li class="'results"><a href="{{track.url}}">{{track.name}}</a> - <a href="{{track.artisturl}}">{{track.artist}}</a></li>
+            {% endfor %}
+        </ol>
+    {% endfor %}
+{% endif %}
+
+</body>
+</html>
