@@ -1,8 +1,8 @@
-### Uncomment line 23 when you get an API key and put it into lastfm_key.py ###
+### Uncomment line 24/line 85 when you get API keys and put it into lastfm_key.py/mapquest_key.py ###
 
-import urllib.request, urllib.error, urllib.parse, json, lastfm_key, logging
+import urllib.request, urllib.error, urllib.parse, json, lastfm_key, logging, mapquest_key
 
-# Utility functions from previous hw's
+# Utility functions from previous hw's for testing/safe_get
 def pretty(obj):
     return json.dumps(obj, sort_keys=True, indent=2)
 
@@ -17,20 +17,24 @@ def safe_get(url):
         print("Reason: ", e.reason)
     return None
 
-# Repurposing FlickrREST from HW 6 for last.fm
+# Repurposing FlickrREST from HW 6 for last.fm/mapquest urls
 def geturl(baseurl = 'http://ws.audioscrobbler.com/2.0',
     method = 'geo.gettopartists',
-    # api_key = lastfm_key.key,
+    mapquest = False,
+    api_key = lastfm_key.key,
     format = 'json',
     params={},
     ):
-    params['method'] = method
-    params['api_key'] = api_key
+    if mapquest == False:
+        params['method'] = method
+        params['api_key'] = api_key
+    else:
+        params['key'] = api_key
     params['format'] = format
     url = baseurl + "?" + urllib.parse.urlencode(params)
     return url
 
-def lastfmrequest(url):
+def apirequest(url):
     # make a request with the url and necessary headers
     # User-Agent
     headers = {"User-Agent": "fujikenji (fujikenji22@gmail.com)"}
@@ -60,18 +64,30 @@ def musicobjects(infotype, countrylist, resultsnum):
 
     if 'toptracks' in infotype:
         for country in countrylist:
-            tracksinfo = lastfmrequest(geturl(method='geo.gettoptracks', params={'limit': resultsnum, 'country': country.strip()}))
+            tracksinfo = apirequest(geturl(method='geo.gettoptracks', params={'limit': resultsnum, 'country': country.strip()}))
             tracks = [Track(info) for info in tracksinfo['tracks']['track']]
             infodict[country.strip()] = tracks
 
     elif 'topartists' in infotype:
         for country in countrylist:
-            artistinfo = lastfmrequest(geturl(params={'limit': resultsnum, 'country':country.strip()}))
+            artistinfo = apirequest(geturl(params={'limit': resultsnum, 'country':country.strip()}))
             print(pretty(artistinfo))
             artists = [Artist(info) for info in artistinfo['topartists']['artist']]
             infodict[country.strip()] = artists
 
     return infodict
+
+# Returns a dictionary with country names as keys and lat/long tuples for values
+def getlatlong(countrylist):
+    latlongdict = {}
+    for country in countrylist:
+        url = geturl(baseurl='http://www.mapquestapi.com/geocoding/v1/address',
+                     # api_key=mapquest_key.key,
+                     mapquest = True,
+                     params={'location':country})
+        countryjson = apirequest(url)
+        latlongdict[country] = (countryjson['results'][0]['locations'][0]['latLng']['lat'], countryjson['results'][0]['locations'][0]['latLng']['lng'])
+    return latlongdict
 
 from flask import Flask, render_template, request
 app = Flask(__name__)
@@ -79,6 +95,7 @@ app = Flask(__name__)
 @app.route("/")
 def main_handler():
     app.logger.info("In MainHandler")
+    getlatlong(['Japan', 'Nigeria'])
     return render_template('topmusictemplate.html')
 
 @app.route("/locationget")
@@ -92,6 +109,8 @@ def locationget_handler():
     else:
         countries = country.split(',')
         resultvalues['country'] = [country.strip() for country in countries]
+
+    resultvalues['coordinates'] = getlatlong(resultvalues['country'])
 
     # If user chose artists/tracks/both
     infotype = request.args.getlist('infotype')
