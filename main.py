@@ -2,7 +2,7 @@
 
 import urllib.request, urllib.error, urllib.parse, json, lastfm_key, logging, mapquest_key
 
-# Utility functions from previous hw's for testing/safe_get
+# Utility functions from previous hw"s for testing/safe_get
 def pretty(obj):
     return json.dumps(obj, sort_keys=True, indent=2)
 
@@ -18,19 +18,19 @@ def safe_get(url):
     return None
 
 # Repurposing FlickrREST from HW 6 for last.fm/mapquest urls
-def geturl(baseurl = 'http://ws.audioscrobbler.com/2.0',
-    method = 'geo.gettopartists',
+def geturl(baseurl = "http://ws.audioscrobbler.com/2.0",
+    method = "geo.gettopartists",
     mapquest = False,
     api_key = lastfm_key.key,
-    format = 'json',
+    format = "json",
     params={},
     ):
     if mapquest == False:
-        params['method'] = method
-        params['api_key'] = api_key
+        params["method"] = method
+        params["api_key"] = api_key
     else:
-        params['key'] = api_key
-    params['format'] = format
+        params["key"] = api_key
+    params["format"] = format
     url = baseurl + "?" + urllib.parse.urlencode(params)
     return url
 
@@ -46,33 +46,32 @@ def apirequest(url):
 
 class Artist():
     def __init__(self, artistinfo):
-        self.name = artistinfo['name']
-        self.listeners = artistinfo['listeners']
-        self.url = artistinfo['url']
+        self.name = artistinfo["name"]
+        self.listeners = artistinfo["listeners"]
+        self.url = artistinfo["url"]
 
 class Track():
     def __init__(self, trackinfo):
-        self.name = trackinfo['name']
-        self.listeners = trackinfo['listeners']
-        self.url = trackinfo['url']
-        self.artist = trackinfo['artist']['name']
-        self.artisturl = trackinfo['artist']['url']
+        self.name = trackinfo["name"]
+        self.listeners = trackinfo["listeners"]
+        self.url = trackinfo["url"]
+        self.artist = trackinfo["artist"]["name"]
+        self.artisturl = trackinfo["artist"]["url"]
 
 # Makes a dictionary of all the track/artist objects for each user-provided country
 def musicobjects(infotype, countrylist, resultsnum):
     infodict = {}
 
-    if 'toptracks' in infotype:
+    if "toptracks" in infotype:
         for country in countrylist:
-            tracksinfo = apirequest(geturl(method='geo.gettoptracks', params={'limit': resultsnum, 'country': country.strip()}))
-            tracks = [Track(info) for info in tracksinfo['tracks']['track']]
+            tracksinfo = apirequest(geturl(method="geo.gettoptracks", params={"limit": resultsnum, "country": country.strip()}))
+            tracks = [Track(info) for info in tracksinfo["tracks"]["track"]]
             infodict[country.strip()] = tracks
 
-    elif 'topartists' in infotype:
+    elif "topartists" in infotype:
         for country in countrylist:
-            artistinfo = apirequest(geturl(params={'limit': resultsnum, 'country':country.strip()}))
-            print(pretty(artistinfo))
-            artists = [Artist(info) for info in artistinfo['topartists']['artist']]
+            artistinfo = apirequest(geturl(params={"limit": resultsnum, "country":country.strip()}))
+            artists = [Artist(info) for info in artistinfo["topartists"]["artist"]]
             infodict[country.strip()] = artists
 
     return infodict
@@ -81,12 +80,12 @@ def musicobjects(infotype, countrylist, resultsnum):
 def getlatlong(countrylist):
     latlongdict = {}
     for country in countrylist:
-        url = geturl(baseurl='http://www.mapquestapi.com/geocoding/v1/address',
-                     # api_key=mapquest_key.key,
+        url = geturl(baseurl="http://www.mapquestapi.com/geocoding/v1/address",
+                     api_key=mapquest_key.key,
                      mapquest = True,
-                     params={'location':country})
+                     params={"location":country})
         countryjson = apirequest(url)
-        latlongdict[country] = (countryjson['results'][0]['locations'][0]['latLng']['lat'], countryjson['results'][0]['locations'][0]['latLng']['lng'])
+        latlongdict[country] = [countryjson["results"][0]["locations"][0]["latLng"]["lat"], countryjson["results"][0]["locations"][0]["latLng"]["lng"]]
     return latlongdict
 
 from flask import Flask, render_template, request
@@ -95,47 +94,46 @@ app = Flask(__name__)
 @app.route("/")
 def main_handler():
     app.logger.info("In MainHandler")
-    getlatlong(['Japan', 'Nigeria'])
-    return render_template('topmusictemplate.html')
+    return render_template("topmusictemplate.html")
 
 @app.route("/locationget")
 def locationget_handler():
-    resultvalues = {'tracks':True, 'artists':True}
+    resultvalues = {"tracks":True, "artists":True}
 
     # Getting country name(s) from the form
-    country = request.args.get('country')
+    country = request.args.get("country")
     if "," not in country:
-        resultvalues['country'] = [country]
+        resultvalues["country"] = [country]
     else:
-        countries = country.split(',')
-        resultvalues['country'] = [country.strip() for country in countries]
+        countries = country.split(",")
+        resultvalues["country"] = [country.strip() for country in countries]
 
-    resultvalues['coordinates'] = getlatlong(resultvalues['country'])
+    resultvalues["coordinates"] = getlatlong(resultvalues["country"])
 
     # If user chose artists/tracks/both
-    infotype = request.args.getlist('infotype')
+    infotype = request.args.getlist("infotype")
 
     if country != "" and infotype != []:
-        resultsnum = request.args.get('results', 5)
-        resultvalues['resultsnum'] = resultsnum
+        resultsnum = request.args.get("results", 5)
+        resultvalues["resultsnum"] = resultsnum
 
         if len(infotype) > 1:
-            resultvalues['tracksorartists'] = "Tracks/Artists"
-            resultvalues['tracksinfo'] = musicobjects(infotype, resultvalues['country'], resultsnum)
-            resultvalues['artistsinfo'] = musicobjects(infotype, resultvalues['country'], resultsnum)
+            resultvalues["tracksorartists"] = "Tracks/Artists"
+            resultvalues["tracksinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
+            resultvalues["artistsinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
 
-        elif 'toptracks' in infotype:
-            resultvalues['tracksorartists'] = "Tracks"
-            resultvalues['artists'] = False
-            resultvalues['tracksinfo'] = musicobjects(infotype, resultvalues['country'], resultsnum)
+        elif "toptracks" in infotype:
+            resultvalues["tracksorartists"] = "Tracks"
+            resultvalues["artists"] = False
+            resultvalues["tracksinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
 
-        elif 'topartists' in infotype:
-            resultvalues['tracksorartists'] = 'Artists'
-            resultvalues['tracks'] = False
-            resultvalues['artistsinfo'] = musicobjects(infotype, resultvalues['country'], resultsnum)
+        elif "topartists" in infotype:
+            resultvalues["tracksorartists"] = "Artists"
+            resultvalues["tracks"] = False
+            resultvalues["artistsinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
 
     print(resultvalues)
-    return render_template('topmusicresults.html', results=resultvalues)
+    return render_template("topmusicresults.html", results=resultvalues)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="localhost", port=8080, debug=True)

@@ -2,36 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Top {{resultsnum}} {{tracksorartists}} for {{country}}</title>
-    <link rel='stylesheet' href="{{ url_for('static', filename='topmusicstyle.css') }}"/>
-<!--    <style>-->
-<!--        * {-->
-<!--            background-color: #FCDFCE;-->
-<!--            font-family: Montserrat, sans-serif;-->
-<!--        }-->
-<!--        h1 {-->
-<!--            text-align: center;-->
-<!--        }-->
-<!--        h4 {-->
-<!--            margin: auto;-->
-<!--            width: 22em;-->
-<!--        }-->
-<!--        li {-->
-<!--            color: #1E2749;-->
-<!--            margin: auto;-->
-<!--            width: 22em;-->
-<!--        }-->
-<!--        a:link {-->
-<!--            color: #5B80CB;-->
-<!--        }-->
-<!--        a:visited {-->
-<!--            color: #1E2749;-->
-<!--        }-->
-<!--    </style>-->
+    <title>Top {{results['resultsnum']}} {{results['tracksorartists']}} for {{results['country']}}</title>
+    <link rel='stylesheet' href='/static/topmusicstyle.css'>
+    <script type="text/javascript">
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 5,
+                center: { lat: 47.6062, lng: -122.332},
+            });
+            {%  for country in results['coordinates'] %}
+                const marker = new google.maps.Marker({
+                    position: { lat: {{ results['coordinates'][country][0] }}, lng: {{ results['coordinates'][country][1] }} },
+                    map:map,
+                });
+            {% endfor %}
+        }
+    </script>
 
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
+    defer>
+    </script>
 </head>
+
 <body>
 <h1>Top {{results['resultsnum']}} {{results['tracksorartists']}} for your countries:</h1>
+
+<div id="map"></div>
 
 {% if results['artists'] == True %}
     {% for country in results['country'] %}

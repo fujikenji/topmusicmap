@@ -1,18 +1,44 @@
-    h1 {
-        text-align: center;
-    }
-    h4 {
-        margin: auto;
-        width: 22em;
-    }
-    li {
-        color: #1E2749;
-        margin: auto;
-        width: 22em;
-    }
-    a:link {
-        color: #5B80CB;
-    }
-    a:visited {
-        color: #1E2749;
-    }
+* {
+    /*background-color: #FCDFCE;*/
+    font-family: Montserrat, sans-serif;
+}
+h1 {
+    text-align: center;
+}
+h4 {
+    margin: auto;
+    width: 22em;
+}
+li {
+    color: #1E2749;
+    margin: auto;
+    width: 22em;
+}
+a:link {
+    color: #5B80CB;
+}
+a:visited {
+    color: #1E2749;
+}
+form {
+    margin: 0 auto;
+    width: 500px;
+}
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+form li + li {
+    margin-top: 1em;
+}
+input {
+    background-color: #FFFFFF;
+}
+label {
+    text-decoration-color: #5B80CB;
+}
+#map {
+    height: 500px;
+    width: 500px;
+}
