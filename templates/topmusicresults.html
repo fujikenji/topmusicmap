@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Top {{results['resultsnum']}} {{results['tracksorartists']}} for {{results['country']}}</title>
+    <title>Top {{results['resultsnum']}} {{results['tracksorartists']}} for Your Countries</title>
     <link rel='stylesheet' href='/static/topmusicstyle.css'>
     <script type="text/javascript">
         function initMap() {
@@ -10,15 +10,14 @@
                 zoom: 5,
                 center: { lat: 47.6062, lng: -122.332},
             });
-            {%  for country in results['coordinates'] %}
-                const marker = new google.maps.Marker({
-                    position: { lat: {{ results['coordinates'][country][0] }}, lng: {{ results['coordinates'][country][1] }} },
-                    map:map,
-                });
-            {% endfor %}
+{#            {%  for country in results['coordinates'] %}#}
+{#                const marker = new google.maps.Marker({#}
+{#                    position: { lat: {{ results['coordinates'][country][0] }}, lng: {{ results['coordinates'][country][1] }} },#}
+{#                    map:map,#}
+{#                });#}
+{#            {% endfor %}#}
         }
     </script>
-
     <script
     src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"
     defer>
@@ -26,31 +25,39 @@
 </head>
 
 <body>
-<h1>Top {{results['resultsnum']}} {{results['tracksorartists']}} for your countries:</h1>
 
-<div id="map"></div>
+    <div class="header">
+        <h1>Top {{results['resultsnum']}} {{results['tracksorartists']}} for your countries:</h1>
+    </div>
 
-{% if results['artists'] == True %}
-    {% for country in results['country'] %}
-        <h4>Artists - {{ country }}: </h4>
-        <ol>
-            {% for artist in results['artistsinfo'][country] %}
-                <li class="results"><a href="{{artist.url}}">{{artist.name}}</a></li>
+    <div id="map"></div>
+
+    <div id="results">
+        {% if results['artists'] == True %}
+            {% for country in results['country'] %}
+                <div class="artistresult">
+                    <h4 class="resulttitle">Artists - {{ country }}: </h4>
+                    <ol>
+                        {% for artist in results['artistsinfo'][country] %}
+                            <li><a href="{{artist.url}}">{{artist.name}}</a></li>
+                        {% endfor %}
+                    </ol>
+                </div>
             {% endfor %}
-        </ol>
-    {% endfor %}
-{% endif %}
+        {% endif %}
 
-{% if results['tracks'] == True %}
-    {% for country in results['country'] %}
-        <h4>Tracks - {{ country }}:</h4>
-        <ol>
-            {% for track in results['tracksinfo'][country] %}
-                <li class="'results"><a href="{{track.url}}">{{track.name}}</a> - <a href="{{track.artisturl}}">{{track.artist}}</a></li>
-            {% endfor %}
-        </ol>
-    {% endfor %}
-{% endif %}
-
+    {% if results['tracks'] == True %}
+        {% for country in results['country'] %}
+            <div class="trackresult">
+                <h4 class="resulttitle">Tracks - {{ country }}:</h4>
+                <ol>
+                    {% for track in results['tracksinfo'][country] %}
+                        <li class="result"><a href="{{track.url}}">{{track.name}}</a> - <a href="{{track.artisturl}}">{{track.artist}}</a></li>
+                    {% endfor %}
+                </ol>
+            </div>
+        {% endfor %}
+    {% endif %}
+    </div>
 </body>
 </html>
