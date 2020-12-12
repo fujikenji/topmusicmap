@@ -1,4 +1,4 @@
-### Uncomment line 24/line 85 when you get API keys and put it into lastfm_key.py/mapquest_key.py ###
+### Uncomment line 24/line 93 when you get API keys and put it into lastfm_key.py/mapquest_key.py ###
 
 import urllib.request, urllib.error, urllib.parse, json, lastfm_key, logging, mapquest_key
 
@@ -62,7 +62,16 @@ class Track():
 def musicobjects(infotype, countrylist, resultsnum):
     infodict = {}
 
-    if "toptracks" in infotype:
+    if "toptracks" in infotype and "topartists" in infotype:
+        for country in countrylist:
+            tracksinfo = apirequest(geturl(method="geo.gettoptracks", params={"limit": resultsnum, "country": country.strip()}))
+            tracks = [Track(info) for info in tracksinfo["tracks"]["track"]]
+            infodict[country.strip()] = tracks
+            artistinfo = apirequest(geturl(params={"limit": resultsnum, "country":country.strip()}))
+            artists = [Artist(info) for info in artistinfo["topartists"]["artist"]]
+            infodict[country.strip()] = artists
+
+    elif "toptracks" in infotype:
         for country in countrylist:
             tracksinfo = apirequest(geturl(method="geo.gettoptracks", params={"limit": resultsnum, "country": country.strip()}))
             tracks = [Track(info) for info in tracksinfo["tracks"]["track"]]
@@ -119,8 +128,8 @@ def locationget_handler():
 
         if len(infotype) > 1:
             resultvalues["tracksorartists"] = "Tracks/Artists"
-            resultvalues["tracksinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
-            resultvalues["artistsinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
+            resultvalues["tracksinfo"] = musicobjects('toptracks', resultvalues["country"], resultsnum)
+            resultvalues["artistsinfo"] = musicobjects('topartists', resultvalues["country"], resultsnum)
 
         elif "toptracks" in infotype:
             resultvalues["tracksorartists"] = "Tracks"
