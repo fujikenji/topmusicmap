@@ -28,11 +28,11 @@ input[type=submit] {
     color: white;
     border-style: outset;
     border-color: #1E2749;
-    border-top: 15px;
     border-radius: 10px;
-    height: 40px;
-    width: 90px;
+    height: 55px;
+    width: 120px;
     font-family: "Montserrat SemiBold";
+    margin-top: 45px;
 }
 input[type=submit]:hover{
     background-color: #5B80CB;

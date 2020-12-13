@@ -1,6 +1,7 @@
-### Uncomment line 24/line 93 when you get API keys and put it into lastfm_key.py/mapquest_key.py ###
+### Uncomment line 25/line 89 when you get API keys and put it into lastfm_key.py/mapquest_key.py
+### Uncomment line 52 in topmusicresults.html and put in the google API key after key=
 
-import urllib.request, urllib.error, urllib.parse, json, lastfm_key, logging, mapquest_key
+import urllib.request, urllib.error, urllib.parse, json, lastfm_key, mapquest_key
 
 # Utility functions from previous hw"s for testing/safe_get
 def pretty(obj):
@@ -21,7 +22,7 @@ def safe_get(url):
 def geturl(baseurl = "http://ws.audioscrobbler.com/2.0",
     method = "geo.gettopartists",
     mapquest = False,
-    api_key = lastfm_key.key,
+    # api_key = lastfm_key.key,
     format = "json",
     params={},
     ):
@@ -34,8 +35,8 @@ def geturl(baseurl = "http://ws.audioscrobbler.com/2.0",
     url = baseurl + "?" + urllib.parse.urlencode(params)
     return url
 
+# Make a request with the url and necessary headers
 def apirequest(url):
-    # make a request with the url and necessary headers
     # User-Agent
     headers = {"User-Agent": "fujikenji (fujikenji22@gmail.com)"}
     req = urllib.request.Request(url,headers=headers)
@@ -62,35 +63,30 @@ class Track():
 def musicobjects(infotype, countrylist, resultsnum):
     infodict = {}
 
-    if "toptracks" in infotype and "topartists" in infotype:
-        for country in countrylist:
-            tracksinfo = apirequest(geturl(method="geo.gettoptracks", params={"limit": resultsnum, "country": country.strip()}))
-            tracks = [Track(info) for info in tracksinfo["tracks"]["track"]]
-            infodict[country.strip()] = tracks
-            artistinfo = apirequest(geturl(params={"limit": resultsnum, "country":country.strip()}))
-            artists = [Artist(info) for info in artistinfo["topartists"]["artist"]]
-            infodict[country.strip()] = artists
+    for country in countrylist:
 
-    elif "toptracks" in infotype:
-        for country in countrylist:
+        if "toptracks" in infotype:
             tracksinfo = apirequest(geturl(method="geo.gettoptracks", params={"limit": resultsnum, "country": country.strip()}))
+            if 'error' in tracksinfo:
+                return 'error'
             tracks = [Track(info) for info in tracksinfo["tracks"]["track"]]
             infodict[country.strip()] = tracks
 
-    elif "topartists" in infotype:
-        for country in countrylist:
+        elif "topartists" in infotype:
             artistinfo = apirequest(geturl(params={"limit": resultsnum, "country":country.strip()}))
+            if 'error' in artistinfo:
+                return 'error'
             artists = [Artist(info) for info in artistinfo["topartists"]["artist"]]
             infodict[country.strip()] = artists
 
     return infodict
 
-# Returns a dictionary with country names as keys and lat/long tuples for values
+# Returns a dictionary with country names as keys and lat/long lists for values
 def getlatlong(countrylist):
     latlongdict = {}
     for country in countrylist:
         url = geturl(baseurl="http://www.mapquestapi.com/geocoding/v1/address",
-                     api_key=mapquest_key.key,
+                     # api_key=mapquest_key.key,
                      mapquest = True,
                      params={"location":country})
         countryjson = apirequest(url)
@@ -102,7 +98,6 @@ app = Flask(__name__)
 
 @app.route("/")
 def main_handler():
-    app.logger.info("In MainHandler")
     return render_template("topmusictemplate.html")
 
 @app.route("/locationget")
@@ -111,37 +106,52 @@ def locationget_handler():
 
     # Getting country name(s) from the form
     country = request.args.get("country")
-    if "," not in country:
-        resultvalues["country"] = [country]
-    else:
-        countries = country.split(",")
-        resultvalues["country"] = [country.strip() for country in countries]
-
-    resultvalues["coordinates"] = getlatlong(resultvalues["country"])
-
     # If user chose artists/tracks/both
     infotype = request.args.getlist("infotype")
+    # Number of results the user wants
+    resultsnum = request.args.get("results")
 
-    if country != "" and infotype != []:
-        resultsnum = request.args.get("results", 5)
+    # Check if any of the form fields are blank
+    if country != "" and infotype != [] and resultsnum != "":
+        # Splitting up the country names into a list if there are multiple countries entered
+        if "," not in country:
+            resultvalues["country"] = [country]
+        else:
+            countries = country.split(",")
+            resultvalues["country"] = [country.strip() for country in countries]
+
+        resultvalues["coordinates"] = getlatlong(resultvalues["country"])
         resultvalues["resultsnum"] = resultsnum
 
+        # If user wants both tracks and artists
         if len(infotype) > 1:
             resultvalues["tracksorartists"] = "Tracks/Artists"
             resultvalues["tracksinfo"] = musicobjects('toptracks', resultvalues["country"], resultsnum)
             resultvalues["artistsinfo"] = musicobjects('topartists', resultvalues["country"], resultsnum)
-
+            if resultvalues["tracksinfo"] == 'error' or resultvalues["artistsinfo"] == 'error':
+                return render_template('topmusictemplate.html', prompt="Something went wrong. Did you enter your "
+                                                                        "country names as listed at the link provided?")
+        # Just tracks
         elif "toptracks" in infotype:
             resultvalues["tracksorartists"] = "Tracks"
             resultvalues["artists"] = False
             resultvalues["tracksinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
-
+            if resultvalues["tracksinfo"] == 'error':
+                return render_template('topmusictemplate.html', prompt="Something went wrong. Did you enter your "
+                                                                        "country names as listed at the link provided?")
+        # Just artists
         elif "topartists" in infotype:
             resultvalues["tracksorartists"] = "Artists"
             resultvalues["tracks"] = False
             resultvalues["artistsinfo"] = musicobjects(infotype, resultvalues["country"], resultsnum)
+            if resultvalues["artistsinfo"] == 'error':
+                return render_template('topmusictemplate.html', prompt="Something went wrong. Did you enter your country "
+                                                                   "names as listed at the link provided?")
+    else:
+        return render_template('topmusictemplate.html', prompt="Please fill in all the necessary fields.")
 
-    print(resultvalues)
+    # Uncomment for testing/modifying in the future
+    # print(resultvalues)
     return render_template("topmusicresults.html", results=resultvalues)
 
 if __name__ == "__main__":
